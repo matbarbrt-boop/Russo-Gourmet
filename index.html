@@ -14,10 +14,11 @@
         .product-card { background: var(--branco); display: flex; padding: 15px; border-radius: 20px; margin-bottom: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
         .product-img { width: 80px; height: 80px; border-radius: 12px; object-fit: cover; margin-right: 15px; }
         .btn-add { background: var(--marrom); color: white; border: none; padding: 8px 15px; border-radius: 10px; cursor: pointer; }
-        .cart-bar { position: fixed; bottom: 20px; left: 5%; width: 90%; background: var(--marrom); color: white; padding: 18px; border-radius: 20px; display: flex; justify-content: space-between; font-weight: bold; }
+        .cart-bar { position: fixed; bottom: 20px; left: 5%; width: 90%; background: var(--marrom); color: white; padding: 18px; border-radius: 20px; display: flex; justify-content: space-between; font-weight: bold; z-index: 1000; }
         .modal-full { position: fixed; inset: 0; background: var(--offwhite); z-index: 2000; padding: 20px; overflow-y: auto; }
-        input, select { width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 12px; border: 1px solid #ddd; }
-        .btn-final { background: #2b9348; color: white; width: 100%; padding: 18px; border: none; border-radius: 15px; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 12px; border: 1px solid #ddd; font-size: 14px; }
+        .btn-final { background: #2b9348; color: white; width: 100%; padding: 18px; border: none; border-radius: 15px; font-weight: bold; cursor: pointer; }
+        .taxa-info { background: #eee; padding: 10px; border-radius: 10px; margin-bottom: 15px; font-size: 0.9rem; display: flex; justify-content: space-between; }
     </style>
 </head>
 <body>
@@ -37,24 +38,57 @@
     <div id="modal-checkout" class="modal-full" style="display:none">
         <h2>Finalizar Pedido</h2><br>
         <div id="resumo-itens"></div><br>
-        <h3 id="total-final"></h3><br>
+        
+        <div class="taxa-info"><span>Produtos:</span> <b id="subtotal-val">R$ 0,00</b></div>
+        <div class="taxa-info"><span>Taxa de Entrega:</span> <b id="taxa-val">R$ 0,00</b></div>
+        <div id="box-taxa-troco" class="taxa-info" style="display:none; color: #d9534f;"><span>Taxa p/ Troco:</span> <b>R$ 2,00</b></div>
+        <h3 id="total-final" style="text-align: right; color: var(--marrom-claro); margin-bottom: 20px;"></h3>
         
         <input type="text" id="c-nome" placeholder="Seu Nome">
-        <input type="text" id="c-end" placeholder="Endereço Completo">
         
-        <p><b>Pagamento:</b></p>
-        <select id="c-pag" onchange="checkPix()">
+        <p><b>Selecione seu Bairro:</b></p>
+        <select id="c-bairro" onchange="atualizarTotal()">
+            <option value="0">Escolha o Bairro...</option>
+            <option value="7">Pae Cará (Taxa R$ 7,00)</option>
+            <option value="7">Vila Alice (Taxa R$ 7,00)</option>
+            <option value="7">Cunhambebe (Taxa R$ 7,00)</option>
+            <option value="7">Parque Estuário (Taxa R$ 7,00)</option>
+            <option value="8">Jardim Progresso (Taxa R$ 8,00)</option>
+            <option value="8">Vila Áurea (Taxa R$ 8,00)</option>
+            <option value="8">Monteiro da Cruz (Taxa R$ 8,00)</option>
+            <option value="8">Prainha (Taxa R$ 8,00)</option>
+            <option value="10">Aldeia (Taxa R$ 10,00)</option>
+            <option value="9">Boa Esperança (Taxa R$ 9,00)</option>
+            <option value="10">Jardim Conceiçãozinha (Taxa R$ 10,00)</option>
+            <option value="13">Sítio Conceiçãozinha (Taxa R$ 13,00)</option>
+            <option value="13">Praça Yara Santini (Taxa R$ 13,00)</option>
+        </select>
+
+        <input type="text" id="c-rua" placeholder="Rua e Número da Casa">
+        <textarea id="c-ref" placeholder="Ponto de Referência" rows="2"></textarea>
+        
+        <p><b>Forma de Pagamento:</b></p>
+        <select id="c-pag" onchange="checkPagamento()">
             <option value="Pix">Pix (Chave: 13982155569)</option>
-            <option value="Link de Pagamento (Enviar após o pedido)">Link de Pagamento (Eu te envio o link de pagamento)</option>
+            <option value="Link de Pagamento (Enviar após o pedido)">Link de Pagamento (Você me envia o link)</option>
             <option value="Dinheiro">Dinheiro</option>
         </select>
+
+        <div id="box-troco" style="display:none">
+            <p style="font-size: 0.8rem; color: #d9534f; margin-bottom: 5px;">* Precisa de Troco? (Adicional de R$ 2,00)</p>
+            <select id="c-precisa-troco" onchange="atualizarTotal()">
+                <option value="Não">Não preciso de troco</option>
+                <option value="Sim">Sim, levar troco (Taxa +R$ 2,00)</option>
+            </select>
+            <input type="text" id="c-quanto-troco" placeholder="Troco para quanto?" style="margin-top:-10px">
+        </div>
 
         <div id="pix-box" style="background:#e8f5e9; padding:15px; border-radius:12px; margin-bottom:15px; border:1px dashed #2b9348">
             <b>Chave Pix: 13982155569</b>
         </div>
 
         <button class="btn-final" onclick="enviarWhatsApp()">PEDIR NO WHATSAPP</button>
-        <button onclick="fecharCheckout()" style="width:100%; margin-top:20px; border:none; background:none; color:#999">Voltar</button>
+        <button onclick="fecharCheckout()" style="width:100%; margin-top:20px; border:none; background:none; color:#999; cursor:pointer;">Voltar</button>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
@@ -125,22 +159,77 @@
 
         function abrirCheckout() {
             const resumo = document.getElementById('resumo-itens');
-            resumo.innerHTML = carrinho.map(i => `<p>${i.qtd}x ${i.n} - R$ ${(i.preco*i.qtd).toFixed(2)}</p>`).join('');
-            const total = carrinho.reduce((acc, i) => acc + (i.preco * i.qtd), 0).toFixed(2);
-            document.getElementById('total-final').innerText = `Total: R$ ${total.replace('.',',')}`;
+            resumo.innerHTML = carrinho.map(i => `<p>${i.qtd}x ${i.n} - R$ ${(i.preco*i.qtd).toFixed(2).replace('.',',')}</p>`).join('');
+            atualizarTotal();
             document.getElementById('modal-checkout').style.display = 'block';
         }
 
+        function atualizarTotal() {
+            const subtotal = carrinho.reduce((acc, i) => acc + (i.preco * i.qtd), 0);
+            const taxaEntrega = parseFloat(document.getElementById('c-bairro').value);
+            
+            let taxaTroco = 0;
+            const pag = document.getElementById('c-pag').value;
+            const precisaTroco = document.getElementById('c-precisa-troco').value;
+            
+            if(pag === "Dinheiro" && precisaTroco === "Sim") {
+                taxaTroco = 2;
+                document.getElementById('box-taxa-troco').style.display = 'flex';
+            } else {
+                document.getElementById('box-taxa-troco').style.display = 'none';
+            }
+
+            const totalGeral = subtotal + taxaEntrega + taxaTroco;
+            
+            document.getElementById('subtotal-val').innerText = `R$ ${subtotal.toFixed(2).replace('.',',')}`;
+            document.getElementById('taxa-val').innerText = `R$ ${taxaEntrega.toFixed(2).replace('.',',')}`;
+            document.getElementById('total-final').innerText = `TOTAL: R$ ${totalGeral.toFixed(2).replace('.',',')}`;
+        }
+
         function fecharCheckout() { document.getElementById('modal-checkout').style.display = 'none'; }
-        function checkPix() { document.getElementById('pix-box').style.display = document.getElementById('c-pag').value === 'Pix' ? 'block' : 'none'; }
+        
+        function checkPagamento() { 
+            const pag = document.getElementById('c-pag').value;
+            document.getElementById('pix-box').style.display = (pag === 'Pix') ? 'block' : 'none'; 
+            document.getElementById('box-troco').style.display = (pag === 'Dinheiro') ? 'block' : 'none'; 
+            atualizarTotal();
+        }
 
         function enviarWhatsApp() {
             const nome = document.getElementById('c-nome').value;
-            const end = document.getElementById('c-end').value;
+            const bairroSel = document.getElementById('c-bairro');
+            const bairroNome = bairroSel.options[bairroSel.selectedIndex].text;
+            const taxaEntrega = parseFloat(bairroSel.value);
+            const rua = document.getElementById('c-rua').value;
+            const ref = document.getElementById('c-ref').value;
             const pag = document.getElementById('c-pag').value;
-            if(!nome || !end) return alert("Dados incompletos!");
-            const total = carrinho.reduce((acc, i) => acc + (i.preco * i.qtd), 0).toFixed(2);
-            const msg = `*PEDIDO RUSSO GOURMET*%0A*Cliente:* ${nome}%0A*End:* ${end}%0A*Pagamento:* ${pag}%0A%0A*Itens:*%0A${carrinho.map(i => `${i.qtd}x ${i.n}`).join('%0A')}%0A%0A*TOTAL: R$ ${total.replace('.',',')}*`;
+            const troco = document.getElementById('c-precisa-troco').value;
+            const quantoTroco = document.getElementById('c-quanto-troco').value;
+
+            if(!nome || taxaEntrega === 0 || !rua) return alert("Por favor, preencha nome, bairro e rua!");
+
+            const subtotal = carrinho.reduce((acc, i) => acc + (i.preco * i.qtd), 0);
+            const taxaTroco = (pag === "Dinheiro" && troco === "Sim") ? 2 : 0;
+            const totalGeral = (subtotal + taxaEntrega + taxaTroco).toFixed(2).replace('.',',');
+
+            let msg = `*PEDIDO RUSSO GOURMET*%0A%0A`;
+            msg += `*Cliente:* ${nome}%0A`;
+            msg += `*Bairro:* ${bairroNome}%0A`;
+            msg += `*Endereço:* ${rua}%0A`;
+            msg += `*Referência:* ${ref}%0A`;
+            msg += `*Pagamento:* ${pag}%0A`;
+            
+            if(pag === "Dinheiro") {
+                msg += `*Levar Troco?* ${troco} (Taxa R$ 2,00)%0A`;
+                if(troco === "Sim") msg += `*Troco para:* ${quantoTroco}%0A`;
+            }
+            
+            msg += `%0A*ITENS:*%0A${carrinho.map(i => `${i.qtd}x ${i.n}`).join('%0A')}%0A`;
+            msg += `%0A*Subtotal:* R$ ${subtotal.toFixed(2).replace('.',',')}`;
+            msg += `%0A*Taxa Entrega:* R$ ${taxaEntrega.toFixed(2).replace('.',',')}`;
+            if(taxaTroco > 0) msg += `%0A*Taxa Troco:* R$ 2,00`;
+            msg += `%0A*TOTAL GERAL: R$ ${totalGeral}*`;
+
             window.open(`https://wa.me/5513982155569?text=${msg}`);
         }
     </script>

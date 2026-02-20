@@ -2,97 +2,102 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Russo Gourmet | Cardápio</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root { --marrom: #3d2b1f; --marrom-claro: #8b5e3c; --offwhite: #fdfaf5; --branco: #ffffff; }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        body { background: var(--offwhite); color: var(--marrom); }
-        .header { background: var(--marrom); color: var(--branco); text-align: center; padding: 40px 20px; border-radius: 0 0 30px 30px; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .product-card { background: var(--branco); display: flex; padding: 15px; border-radius: 20px; margin-bottom: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-        .product-img { width: 80px; height: 80px; border-radius: 12px; object-fit: cover; margin-right: 15px; }
-        .btn-add { background: var(--marrom); color: white; border: none; padding: 8px 15px; border-radius: 10px; cursor: pointer; }
-        .cart-bar { position: fixed; bottom: 20px; left: 5%; width: 90%; background: var(--marrom); color: white; padding: 18px; border-radius: 20px; display: flex; justify-content: space-between; font-weight: bold; z-index: 1000; }
-        .modal-full { position: fixed; inset: 0; background: var(--offwhite); z-index: 2000; padding: 20px; overflow-y: auto; }
-        input, select, textarea { width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 12px; border: 1px solid #ddd; font-size: 14px; }
-        .btn-final { background: #2b9348; color: white; width: 100%; padding: 18px; border: none; border-radius: 15px; font-weight: bold; cursor: pointer; }
-        .taxa-info { background: #eee; padding: 10px; border-radius: 10px; margin-bottom: 15px; font-size: 0.9rem; display: flex; justify-content: space-between; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--offwhite); color: var(--marrom); padding-bottom: 100px; }
+        .header { background: var(--marrom); color: var(--branco); text-align: center; padding: 30px 20px; border-radius: 0 0 30px 30px; }
+        .container { width: 100%; max-width: 600px; margin: 0 auto; padding: 15px; }
+        .product-card { background: var(--branco); display: flex; padding: 12px; border-radius: 15px; margin-bottom: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); border: 1px solid #eee; }
+        .product-img { width: 75px; height: 75px; border-radius: 10px; object-fit: cover; margin-right: 12px; }
+        .btn-add { background: var(--marrom); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
+        .cart-bar { position: fixed; bottom: 15px; left: 5%; width: 90%; background: var(--marrom); color: white; padding: 16px; border-radius: 15px; display: flex; justify-content: space-between; font-weight: bold; z-index: 1000; box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
+        .modal-full { position: fixed; inset: 0; background: var(--offwhite); z-index: 2000; padding: 15px; overflow-y: auto; display: none; }
+        input, select, textarea { width: 100%; padding: 14px; margin-bottom: 12px; border-radius: 10px; border: 1px solid #ddd; font-size: 16px; background: white; }
+        .taxa-info { background: #f0ede9; padding: 10px 15px; border-radius: 10px; margin-bottom: 8px; font-size: 0.85rem; display: flex; justify-content: space-between; }
+        .btn-final { background: #2b9348; color: white; width: 100%; padding: 16px; border: none; border-radius: 12px; font-weight: 800; font-size: 1rem; margin-top: 10px; }
+        h3.cat-title { margin: 25px 0 10px 5px; font-size: 1.1rem; border-left: 4px solid var(--marrom-claro); padding-left: 10px; }
     </style>
 </head>
 <body>
 
     <header class="header">
-        <h1>RUSSO GOURMET</h1>
-        <div id="status-loja" style="font-size: 0.8rem; margin-top:10px;"></div>
+        <h1 style="font-size: 1.5rem; letter-spacing: 1px;">RUSSO GOURMET</h1>
+        <div id="status-loja" style="font-size: 0.75rem; margin-top:8px; font-weight: 600;"></div>
     </header>
 
-    <main class="container" id="menu-render"></main>
+    <main class="container" id="menu-render">
+        <p style="text-align: center; padding: 40px; color: #999;">Carregando delícias...</p>
+    </main>
 
-    <div id="cart-bar" class="cart-bar" onclick="abrirCheckout()" style="display:none">
+    <div id="cart-bar" class="cart-bar" onclick="abrirCheckout()">
         <span>🛒 VER SACOLA</span>
         <span id="cart-total-bar">R$ 0,00</span>
     </div>
 
-    <div id="modal-checkout" class="modal-full" style="display:none">
-        <h2>Finalizar Pedido</h2><br>
-        <div id="resumo-itens"></div><br>
-        
-        <div class="taxa-info"><span>Produtos:</span> <b id="subtotal-val">R$ 0,00</b></div>
-        <div class="taxa-info"><span>Taxa de Entrega:</span> <b id="taxa-val">R$ 0,00</b></div>
-        <div id="box-taxa-troco" class="taxa-info" style="display:none; color: #d9534f;"><span>Taxa p/ Troco:</span> <b>R$ 2,00</b></div>
-        <h3 id="total-final" style="text-align: right; color: var(--marrom-claro); margin-bottom: 20px;"></h3>
-        
-        <input type="text" id="c-nome" placeholder="Seu Nome">
-        
-        <p><b>Selecione seu Bairro:</b></p>
-        <select id="c-bairro" onchange="atualizarTotal()">
-            <option value="0">Escolha o Bairro...</option>
-            <option value="7">Pae Cará (Taxa R$ 7,00)</option>
-            <option value="7">Vila Alice (Taxa R$ 7,00)</option>
-            <option value="7">Cunhambebe (Taxa R$ 7,00)</option>
-            <option value="7">Parque Estuário (Taxa R$ 7,00)</option>
-            <option value="8">Jardim Progresso (Taxa R$ 8,00)</option>
-            <option value="8">Vila Áurea (Taxa R$ 8,00)</option>
-            <option value="8">Monteiro da Cruz (Taxa R$ 8,00)</option>
-            <option value="8">Prainha (Taxa R$ 8,00)</option>
-            <option value="10">Aldeia (Taxa R$ 10,00)</option>
-            <option value="9">Boa Esperança (Taxa R$ 9,00)</option>
-            <option value="10">Jardim Conceiçãozinha (Taxa R$ 10,00)</option>
-            <option value="13">Sítio Conceiçãozinha (Taxa R$ 13,00)</option>
-            <option value="13">Praça Yara Santini (Taxa R$ 13,00)</option>
-        </select>
-
-        <input type="text" id="c-rua" placeholder="Rua e Número da Casa">
-        <textarea id="c-ref" placeholder="Ponto de Referência" rows="2"></textarea>
-        
-        <p><b>Forma de Pagamento:</b></p>
-        <select id="c-pag" onchange="checkPagamento()">
-            <option value="Pix">Pix (Chave: 13982155569)</option>
-            <option value="Link de Pagamento (Enviar após o pedido)">Link de Pagamento (Você me envia o link)</option>
-            <option value="Dinheiro">Dinheiro</option>
-        </select>
-
-        <div id="box-troco" style="display:none">
-            <p style="font-size: 0.8rem; color: #d9534f; margin-bottom: 5px;">* Precisa de Troco? (Adicional de R$ 2,00)</p>
-            <select id="c-precisa-troco" onchange="atualizarTotal()">
-                <option value="Não">Não preciso de troco</option>
-                <option value="Sim">Sim, levar troco (Taxa +R$ 2,00)</option>
+    <div id="modal-checkout" class="modal-full">
+        <div class="container" style="padding: 0;">
+            <h2 style="margin-bottom:15px; font-size: 1.4rem;">Finalizar Pedido</h2>
+            <div id="resumo-itens" style="background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; font-size: 0.9rem;"></div>
+            
+            <div class="taxa-info"><span>Produtos:</span> <b id="subtotal-val">R$ 0,00</b></div>
+            <div class="taxa-info"><span>Entrega:</span> <b id="taxa-val">R$ 0,00</b></div>
+            <div id="box-taxa-troco" class="taxa-info" style="display:none; color: #d9534f; border: 1px solid #d9534f;"><span>Taxa p/ Troco:</span> <b>R$ 2,00</b></div>
+            <h3 id="total-final" style="text-align: right; color: var(--marrom-claro); margin: 15px 5px; font-size: 1.4rem;"></h3>
+            
+            <input type="text" id="c-nome" placeholder="Seu Nome">
+            
+            <select id="c-bairro" onchange="atualizarTotal()">
+                <option value="0">Escolha o Bairro...</option>
+                <option value="7">Pae Cará (R$ 7,00)</option>
+                <option value="7">Vila Alice (R$ 7,00)</option>
+                <option value="7">Cunhambebe (R$ 7,00)</option>
+                <option value="7">Parque Estuário (R$ 7,00)</option>
+                <option value="8">Jardim Progresso (R$ 8,00)</option>
+                <option value="8">Vila Áurea (R$ 8,00)</option>
+                <option value="8">Monteiro da Cruz (R$ 8,00)</option>
+                <option value="8">Prainha (R$ 8,00)</option>
+                <option value="10">Aldeia (R$ 10,00)</option>
+                <option value="9">Boa Esperança (R$ 9,00)</option>
+                <option value="10">Jardim Conceiçãozinha (R$ 10,00)</option>
+                <option value="13">Sítio Conceiçãozinha (R$ 13,00)</option>
+                <option value="13">Praça Yara Santini (R$ 13,00)</option>
             </select>
-            <input type="text" id="c-quanto-troco" placeholder="Troco para quanto?" style="margin-top:-10px">
-        </div>
 
-        <div id="pix-box" style="background:#e8f5e9; padding:15px; border-radius:12px; margin-bottom:15px; border:1px dashed #2b9348">
-            <b>Chave Pix: 13982155569</b>
-        </div>
+            <input type="text" id="c-rua" placeholder="Rua e Número">
+            <input type="text" id="c-ref" placeholder="Ponto de Referência (Opcional)">
+            
+            <p style="font-size: 0.85rem; margin: 10px 5px 5px;"><b>Pagamento:</b></p>
+            <select id="c-pag" onchange="checkPagamento()">
+                <option value="Pix">Pix</option>
+                <option value="Link de Pagamento (Enviar após o pedido)">Link de Pagamento</option>
+                <option value="Dinheiro">Dinheiro</option>
+            </select>
 
-        <button class="btn-final" onclick="enviarWhatsApp()">PEDIR NO WHATSAPP</button>
-        <button onclick="fecharCheckout()" style="width:100%; margin-top:20px; border:none; background:none; color:#999; cursor:pointer;">Voltar</button>
+            <div id="box-troco" style="display:none; background: #fff5f5; padding: 12px; border-radius: 10px; margin-bottom: 15px;">
+                <p style="font-size: 0.75rem; color: #d9534f; margin-bottom: 8px;">* Troco tem acréscimo de R$ 2,00</p>
+                <select id="c-precisa-troco" onchange="atualizarTotal()">
+                    <option value="Não">Não preciso de troco</option>
+                    <option value="Sim">Sim, preciso (+ R$ 2,00)</option>
+                </select>
+                <input type="text" id="c-quanto-troco" placeholder="Troco para quanto?" style="margin-bottom: 0;">
+            </div>
+
+            <div id="pix-box" style="background:#e8f5e9; padding:12px; border-radius:10px; margin-bottom:15px; border:1px dashed #2b9348; font-size: 0.85rem;">
+                <b>Chave Pix: 13982155569</b>
+            </div>
+
+            <button class="btn-final" onclick="enviarWhatsApp()">ENVIAR PEDIDO</button>
+            <button onclick="fecharCheckout()" style="width:100%; margin-top:15px; border:none; background:none; color:#999; padding: 10px;">← Voltar ao cardápio</button>
+        </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyCDiS_Mg9aN6zeU_V7ZReBUv_sTeHXcvz4",
@@ -109,6 +114,7 @@
         let carrinho = [];
         let lojaAberta = false;
 
+        // Horário de Funcionamento
         db.ref('config/horarios').on('value', s => {
             const h = s.val() || {};
             const hoje = ["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"][new Date().getDay()];
@@ -118,23 +124,25 @@
             const [hf, mf] = config.fecha.split(':').map(Number);
             lojaAberta = agora >= (ha*60+ma) && agora <= (hf*60+mf);
             document.getElementById('status-loja').innerText = lojaAberta ? "🟢 ABERTO" : "🔴 FECHADO";
+            document.getElementById('status-loja').style.color = lojaAberta ? "#81c784" : "#e57373";
         });
 
+        // Carregar Itens
         db.ref('cardapio').on('value', s => {
             const data = s.val() || {};
             const menu = document.getElementById('menu-render');
             menu.innerHTML = "";
             Object.keys(data).forEach(cat => {
-                menu.innerHTML += `<h3 style="margin:20px 0 10px">${cat}</h3>`;
+                menu.innerHTML += `<h3 class="cat-title">${cat}</h3>`;
                 Object.entries(data[cat]).forEach(([id, p]) => {
                     menu.innerHTML += `
-                    <div class="product-card" style="${p.esgotado ? 'opacity:0.5' : ''}">
+                    <div class="product-card" style="${p.esgotado ? 'opacity:0.5; filter:grayscale(1);' : ''}">
                         <img src="${p.foto}" class="product-img">
                         <div style="flex:1">
-                            <h4>${p.nome}</h4>
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
-                                <b style="color:var(--marrom-claro)">R$ ${p.promo || p.preco}</b>
-                                ${p.esgotado ? '' : `<button class="btn-add" onclick="addCarrinho('${p.nome}','${p.promo || p.preco}')">+ Add</button>`}
+                            <h4 style="font-size:0.9rem;">${p.nome}</h4>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+                                <b style="color:var(--marrom-claro); font-size:1rem;">R$ ${p.promo || p.preco}</b>
+                                ${p.esgotado ? '<small>Esgotado</small>' : `<button class="btn-add" onclick="addCarrinho('${p.nome}','${p.promo || p.preco}')">Adicionar</button>`}
                             </div>
                         </div>
                     </div>`;
@@ -143,7 +151,7 @@
         });
 
         function addCarrinho(n, p) {
-            if(!lojaAberta) return alert("Fechado!");
+            if(!lojaAberta) return alert("Estamos fechados agora!");
             const preco = parseFloat(p.replace(',','.'));
             const item = carrinho.find(i => i.n === n);
             if(item) item.qtd++; else carrinho.push({n, preco, qtd:1});
@@ -159,34 +167,31 @@
 
         function abrirCheckout() {
             const resumo = document.getElementById('resumo-itens');
-            resumo.innerHTML = carrinho.map(i => `<p>${i.qtd}x ${i.n} - R$ ${(i.preco*i.qtd).toFixed(2).replace('.',',')}</p>`).join('');
+            resumo.innerHTML = carrinho.map(i => `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>${i.qtd}x ${i.n}</span><b>R$ ${(i.preco*i.qtd).toFixed(2).replace('.',',')}</b></div>`).join('');
             atualizarTotal();
             document.getElementById('modal-checkout').style.display = 'block';
+            document.body.style.overflow = 'hidden';
         }
 
         function atualizarTotal() {
             const subtotal = carrinho.reduce((acc, i) => acc + (i.preco * i.qtd), 0);
             const taxaEntrega = parseFloat(document.getElementById('c-bairro').value);
-            
-            let taxaTroco = 0;
             const pag = document.getElementById('c-pag').value;
             const precisaTroco = document.getElementById('c-precisa-troco').value;
             
-            if(pag === "Dinheiro" && precisaTroco === "Sim") {
-                taxaTroco = 2;
-                document.getElementById('box-taxa-troco').style.display = 'flex';
-            } else {
-                document.getElementById('box-taxa-troco').style.display = 'none';
-            }
+            let taxaTroco = (pag === "Dinheiro" && precisaTroco === "Sim") ? 2 : 0;
+            document.getElementById('box-taxa-troco').style.display = taxaTroco > 0 ? 'flex' : 'none';
 
-            const totalGeral = subtotal + taxaEntrega + taxaTroco;
-            
+            const total = subtotal + taxaEntrega + taxaTroco;
             document.getElementById('subtotal-val').innerText = `R$ ${subtotal.toFixed(2).replace('.',',')}`;
             document.getElementById('taxa-val').innerText = `R$ ${taxaEntrega.toFixed(2).replace('.',',')}`;
-            document.getElementById('total-final').innerText = `TOTAL: R$ ${totalGeral.toFixed(2).replace('.',',')}`;
+            document.getElementById('total-final').innerText = `TOTAL: R$ ${total.toFixed(2).replace('.',',')}`;
         }
 
-        function fecharCheckout() { document.getElementById('modal-checkout').style.display = 'none'; }
+        function fecharCheckout() { 
+            document.getElementById('modal-checkout').style.display = 'none'; 
+            document.body.style.overflow = 'auto';
+        }
         
         function checkPagamento() { 
             const pag = document.getElementById('c-pag').value;
@@ -198,37 +203,21 @@
         function enviarWhatsApp() {
             const nome = document.getElementById('c-nome').value;
             const bairroSel = document.getElementById('c-bairro');
-            const bairroNome = bairroSel.options[bairroSel.selectedIndex].text;
-            const taxaEntrega = parseFloat(bairroSel.value);
             const rua = document.getElementById('c-rua').value;
-            const ref = document.getElementById('c-ref').value;
             const pag = document.getElementById('c-pag').value;
-            const troco = document.getElementById('c-precisa-troco').value;
-            const quantoTroco = document.getElementById('c-quanto-troco').value;
-
-            if(!nome || taxaEntrega === 0 || !rua) return alert("Por favor, preencha nome, bairro e rua!");
+            
+            if(!nome || bairroSel.value === "0" || !rua) return alert("Preencha nome, bairro e rua!");
 
             const subtotal = carrinho.reduce((acc, i) => acc + (i.preco * i.qtd), 0);
-            const taxaTroco = (pag === "Dinheiro" && troco === "Sim") ? 2 : 0;
-            const totalGeral = (subtotal + taxaEntrega + taxaTroco).toFixed(2).replace('.',',');
+            const taxaEntrega = parseFloat(bairroSel.value);
+            const taxaTroco = (pag === "Dinheiro" && document.getElementById('c-precisa-troco').value === "Sim") ? 2 : 0;
+            const total = (subtotal + taxaEntrega + taxaTroco).toFixed(2).replace('.',',');
 
-            let msg = `*PEDIDO RUSSO GOURMET*%0A%0A`;
-            msg += `*Cliente:* ${nome}%0A`;
-            msg += `*Bairro:* ${bairroNome}%0A`;
-            msg += `*Endereço:* ${rua}%0A`;
-            msg += `*Referência:* ${ref}%0A`;
-            msg += `*Pagamento:* ${pag}%0A`;
-            
-            if(pag === "Dinheiro") {
-                msg += `*Levar Troco?* ${troco} (Taxa R$ 2,00)%0A`;
-                if(troco === "Sim") msg += `*Troco para:* ${quantoTroco}%0A`;
-            }
-            
+            let msg = `*NOVO PEDIDO - RUSSO GOURMET*%0A%0A`;
+            msg += `*Cliente:* ${nome}%0A*Bairro:* ${bairroSel.options[bairroSel.selectedIndex].text}%0A*End:* ${rua}%0A*Pagamento:* ${pag}%0A`;
+            if(pag === "Dinheiro" && taxaTroco > 0) msg += `*Troco para:* ${document.getElementById('c-quanto-troco').value}%0A`;
             msg += `%0A*ITENS:*%0A${carrinho.map(i => `${i.qtd}x ${i.n}`).join('%0A')}%0A`;
-            msg += `%0A*Subtotal:* R$ ${subtotal.toFixed(2).replace('.',',')}`;
-            msg += `%0A*Taxa Entrega:* R$ ${taxaEntrega.toFixed(2).replace('.',',')}`;
-            if(taxaTroco > 0) msg += `%0A*Taxa Troco:* R$ 2,00`;
-            msg += `%0A*TOTAL GERAL: R$ ${totalGeral}*`;
+            msg += `%0A*TOTAL GERAL: R$ ${total}*`;
 
             window.open(`https://wa.me/5513982155569?text=${msg}`);
         }

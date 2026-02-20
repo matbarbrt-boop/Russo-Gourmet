@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Painel Russo Gourmet</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --marrom: #3d2b1f; --marrom-claro: #8b5e3c; --offwhite: #fdfaf5; --branco: #ffffff; --cinza: #eaddcf; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { display: flex; background: var(--offwhite); color: var(--marrom); min-height: 100vh; }
+        .sidebar { width: 280px; background: var(--marrom); color: var(--offwhite); height: 100vh; position: fixed; padding: 40px 25px; }
+        .sidebar h2 { font-weight: 600; font-size: 1.4rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px; margin-bottom: 30px; text-align: center; }
+        .nav-btn { width: 100%; padding: 14px; margin-bottom: 12px; background: none; border: none; color: var(--cinza); text-align: left; cursor: pointer; border-radius: 12px; transition: 0.3s; }
+        .nav-btn.active { background: var(--marrom-claro); color: var(--branco); font-weight: 600; }
+        .main { margin-left: 280px; flex: 1; padding: 50px; }
+        .card { background: var(--branco); padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid var(--cinza); margin-bottom: 25px; }
+        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--offwhite); border-radius: 12px; margin-bottom: 10px; }
+        .btn-action { border: none; background: none; cursor: pointer; font-size: 1.2rem; margin-left: 10px; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(61, 43, 31, 0.6); backdrop-filter: blur(5px); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-content { background: var(--branco); width: 450px; padding: 40px; border-radius: 25px; }
+        input, textarea { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid var(--cinza); border-radius: 10px; background: var(--offwhite); }
+        .btn-save { background: var(--marrom); color: var(--branco); padding: 15px; border: none; border-radius: 12px; width: 100%; font-weight: 600; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>RUSSO ADMIN</h2>
+    <button onclick="aba('c')" id="btn-c" class="nav-btn active">🍰 Cardápio</button>
+    <button onclick="aba('h')" id="btn-h" class="nav-btn">🕒 Horários</button>
+</div>
+
+<main class="main">
+    <section id="sec-c">
+        <h1>Gerenciar Cardápio</h1>
+        <div id="grid-c" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px;"></div>
+    </section>
+
+    <section id="sec-h" style="display:none">
+        <h1>Horários</h1>
+        <div class="card" id="lista-horarios"></div>
+        <button class="btn-save" onclick="salvarH()" style="max-width: 200px;">Salvar Horários</button>
+    </section>
+</main>
+
+<div id="modal-edicao" class="modal">
+    <div class="modal-content">
+        <h3 id="m-titulo">Editar Item</h3><br>
+        <input type="hidden" id="edit-id">
+        <input type="text" id="m-nome" placeholder="Nome do Doce">
+        <textarea id="m-desc" placeholder="Descrição"></textarea>
+        <input type="text" id="m-preco" placeholder="Preço (Ex: 15,00)">
+        <input type="text" id="m-promo" placeholder="Preço Promo (Opcional)">
+        <input type="text" id="m-foto" placeholder="Link da Foto">
+        <button class="btn-save" onclick="salvarItem()">SALVAR NO BANCO</button>
+        <button onclick="fecharM()" style="width:100%; border:none; background:none; margin-top:15px; color:#999; cursor:pointer;">Cancelar</button>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyCDiS_Mg9aN6zeU_V7ZReBUv_sTeHXcvz4",
+        authDomain: "russo-gourmet.firebaseapp.com",
+        databaseURL: "https://russo-gourmet-default-rtdb.firebaseio.com",
+        projectId: "russo-gourmet",
+        storageBucket: "russo-gourmet.firebasestorage.app",
+        messagingSenderId: "1072063151238",
+        appId: "1:1072063151238:web:c2ad5f6495669559fee507"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const categorias = ["Morango do amor", "Coxinha unitaria", "Copo da felicidade-200ml", "Combinho russo", "Combinho casal", "Fatia cookie", "Piscininha recheada", "Barras recheadas", "Fatia brownie", "Copo da felicidade", "Mega cone trufado", "Bebidas"];
+    let catAtual = "";
+
+    db.ref('cardapio').on('value', snap => {
+        const data = snap.val() || {};
+        const grid = document.getElementById('grid-c');
+        grid.innerHTML = categorias.map(cat => `
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                    <b style="color:var(--marrom-claro)">${cat}</b>
+                    <button class="btn-action" onclick="abrirM('${cat}')">➕</button>
+                </div>
+                ${Object.entries(data[cat] || {}).map(([id, p]) => `
+                    <div class="item-row" style="${p.esgotado ? 'opacity:0.5' : ''}">
+                        <small>${p.nome}</small>
+                        <div>
+                            <button class="btn-action" onclick="toggleEsgotado('${cat}','${id}',${p.esgotado})">${p.esgotado ? '❌' : '✅'}</button>
+                            <button class="btn-action" onclick="editar('${cat}','${id}')">✏️</button>
+                            <button class="btn-action" onclick="excluir('${cat}','${id}')">🗑️</button>
+                        </div>
+                    </div>`).join('')}
+            </div>`).join('');
+    });
+
+    db.ref('config/horarios').on('value', s => {
+        const h = s.val() || {};
+        const dias = ["Segunda","Terça","Quarta","Quinta","Sexta","Sábado","Domingo"];
+        document.getElementById('lista-horarios').innerHTML = dias.map(d => `
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                <b>${d}</b>
+                <span><input type="time" id="a-${d}" value="${h[d]?.abre || '09:00'}"> às <input type="time" id="f-${d}" value="${h[d]?.fecha || '22:00'}"></span>
+            </div>`).join('');
+    });
+
+    function salvarH() {
+        const h = {};
+        ["Segunda","Terça","Quarta","Quinta","Sexta","Sábado","Domingo"].forEach(d => {
+            h[d] = { abre: document.getElementById('a-'+d).value, fecha: document.getElementById('f-'+d).value };
+        });
+        db.ref('config/horarios').set(h).then(() => alert("Salvo!"));
+    }
+
+    function abrirM(cat) {
+        catAtual = cat; document.getElementById('edit-id').value = "";
+        document.getElementById('m-nome').value = ""; document.getElementById('m-preco').value = "";
+        document.getElementById('m-desc').value = ""; document.getElementById('m-promo').value = "";
+        document.getElementById('m-foto').value = ""; document.getElementById('modal-edicao').style.display = 'flex';
+    }
+
+    function editar(cat, id) {
+        catAtual = cat;
+        db.ref('cardapio/'+cat+'/'+id).once('value', s => {
+            const p = s.val();
+            document.getElementById('edit-id').value = id;
+            document.getElementById('m-nome').value = p.nome;
+            document.getElementById('m-desc').value = p.desc;
+            document.getElementById('m-preco').value = p.preco;
+            document.getElementById('m-promo').value = p.promo;
+            document.getElementById('m-foto').value = p.foto;
+            document.getElementById('modal-edicao').style.display = 'flex';
+        });
+    }
+
+    function salvarItem() {
+        const id = document.getElementById('edit-id').value;
+        const item = { nome: document.getElementById('m-nome').value, desc: document.getElementById('m-desc').value, preco: document.getElementById('m-preco').value, promo: document.getElementById('m-promo').value, foto: document.getElementById('m-foto').value, esgotado: false };
+        if(id === "") db.ref('cardapio/'+catAtual).push(item);
+        else db.ref('cardapio/'+catAtual+'/'+id).update(item);
+        fecharM();
+    }
+
+    function toggleEsgotado(cat, id, s) { db.ref('cardapio/'+cat+'/'+id).update({esgotado: !s}); }
+    function excluir(cat, id) { if(confirm("Apagar?")) db.ref('cardapio/'+cat+'/'+id).remove(); }
+    function fecharM() { document.getElementById('modal-edicao').style.display = 'none'; }
+    function aba(id) {
+        document.getElementById('sec-c').style.display = id==='c'?'block':'none';
+        document.getElementById('sec-h').style.display = id==='h'?'block':'none';
+        document.getElementById('btn-c').classList.toggle('active', id==='c');
+        document.getElementById('btn-h').classList.toggle('active', id==='h');
+    }
+</script>
+</body>
+</html>

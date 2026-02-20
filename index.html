@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russo Gourmet | Cardápio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --marrom: #3d2b1f; --marrom-claro: #8b5e3c; --offwhite: #fdfaf5; --branco: #ffffff; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: var(--offwhite); color: var(--marrom); }
+        .header { background: var(--marrom); color: var(--branco); text-align: center; padding: 40px 20px; border-radius: 0 0 30px 30px; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .product-card { background: var(--branco); display: flex; padding: 15px; border-radius: 20px; margin-bottom: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .product-img { width: 80px; height: 80px; border-radius: 12px; object-fit: cover; margin-right: 15px; }
+        .btn-add { background: var(--marrom); color: white; border: none; padding: 8px 15px; border-radius: 10px; cursor: pointer; }
+        .cart-bar { position: fixed; bottom: 20px; left: 5%; width: 90%; background: var(--marrom); color: white; padding: 18px; border-radius: 20px; display: flex; justify-content: space-between; font-weight: bold; }
+        .modal-full { position: fixed; inset: 0; background: var(--offwhite); z-index: 2000; padding: 20px; overflow-y: auto; }
+        input, select { width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 12px; border: 1px solid #ddd; }
+        .btn-final { background: #2b9348; color: white; width: 100%; padding: 18px; border: none; border-radius: 15px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <h1>RUSSO GOURMET</h1>
+        <div id="status-loja" style="font-size: 0.8rem; margin-top:10px;"></div>
+    </header>
+
+    <main class="container" id="menu-render"></main>
+
+    <div id="cart-bar" class="cart-bar" onclick="abrirCheckout()" style="display:none">
+        <span>🛒 VER SACOLA</span>
+        <span id="cart-total-bar">R$ 0,00</span>
+    </div>
+
+    <div id="modal-checkout" class="modal-full" style="display:none">
+        <h2>Finalizar Pedido</h2><br>
+        <div id="resumo-itens"></div><br>
+        <h3 id="total-final"></h3><br>
+        
+        <input type="text" id="c-nome" placeholder="Seu Nome">
+        <input type="text" id="c-end" placeholder="Endereço Completo">
+        
+        <p><b>Pagamento:</b></p>
+        <select id="c-pag" onchange="checkPix()">
+            <option value="Pix">Pix (Chave: 13982155569)</option>
+            <option value="Link de Pagamento (Enviar após o pedido)">Link de Pagamento (Eu te envio o link de pagamento)</option>
+            <option value="Dinheiro">Dinheiro</option>
+        </select>
+
+        <div id="pix-box" style="background:#e8f5e9; padding:15px; border-radius:12px; margin-bottom:15px; border:1px dashed #2b9348">
+            <b>Chave Pix: 13982155569</b>
+        </div>
+
+        <button class="btn-final" onclick="enviarWhatsApp()">PEDIR NO WHATSAPP</button>
+        <button onclick="fecharCheckout()" style="width:100%; margin-top:20px; border:none; background:none; color:#999">Voltar</button>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCDiS_Mg9aN6zeU_V7ZReBUv_sTeHXcvz4",
+            authDomain: "russo-gourmet.firebaseapp.com",
+            databaseURL: "https://russo-gourmet-default-rtdb.firebaseio.com",
+            projectId: "russo-gourmet",
+            storageBucket: "russo-gourmet.firebasestorage.app",
+            messagingSenderId: "1072063151238",
+            appId: "1:1072063151238:web:c2ad5f6495669559fee507"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let carrinho = [];
+        let lojaAberta = false;
+
+        db.ref('config/horarios').on('value', s => {
+            const h = s.val() || {};
+            const hoje = ["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"][new Date().getDay()];
+            const config = h[hoje] || { abre: "09:00", fecha: "22:00" };
+            const agora = new Date().getHours()*60 + new Date().getMinutes();
+            const [ha, ma] = config.abre.split(':').map(Number);
+            const [hf, mf] = config.fecha.split(':').map(Number);
+            lojaAberta = agora >= (ha*60+ma) && agora <= (hf*60+mf);
+            document.getElementById('status-loja').innerText = lojaAberta ? "🟢 ABERTO" : "🔴 FECHADO";
+        });
+
+        db.ref('cardapio').on('value', s => {
+            const data = s.val() || {};
+            const menu = document.getElementById('menu-render');
+            menu.innerHTML = "";
+            Object.keys(data).forEach(cat => {
+                menu.innerHTML += `<h3 style="margin:20px 0 10px">${cat}</h3>`;
+                Object.entries(data[cat]).forEach(([id, p]) => {
+                    menu.innerHTML += `
+                    <div class="product-card" style="${p.esgotado ? 'opacity:0.5' : ''}">
+                        <img src="${p.foto}" class="product-img">
+                        <div style="flex:1">
+                            <h4>${p.nome}</h4>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+                                <b style="color:var(--marrom-claro)">R$ ${p.promo || p.preco}</b>
+                                ${p.esgotado ? '' : `<button class="btn-add" onclick="addCarrinho('${p.nome}','${p.promo || p.preco}')">+ Add</button>`}
+                            </div>
+                        </div>
+                    </div>`;
+                });
+            });
+        });
+
+        function addCarrinho(n, p) {
+            if(!lojaAberta) return alert("Fechado!");
+            const preco = parseFloat(p.replace(',','.'));
+            const item = carrinho.find(i => i.n === n);
+            if(item) item.qtd++; else carrinho.push({n, preco, qtd:1});
+            atualizarBarra();
+        }
+
+        function atualizarBarra() {
+            const bar = document.getElementById('cart-bar');
+            const total = carrinho.reduce((acc, i) => acc + (i.preco * i.qtd), 0);
+            bar.style.display = carrinho.length > 0 ? 'flex' : 'none';
+            document.getElementById('cart-total-bar').innerText = `R$ ${total.toFixed(2).replace('.',',')}`;
+        }
+
+        function abrirCheckout() {
+            const resumo = document.getElementById('resumo-itens');
+            resumo.innerHTML = carrinho.map(i => `<p>${i.qtd}x ${i.n} - R$ ${(i.preco*i.qtd).toFixed(2)}</p>`).join('');
+            const total = carrinho.reduce((acc, i) => acc + (i.preco * i.qtd), 0).toFixed(2);
+            document.getElementById('total-final').innerText = `Total: R$ ${total.replace('.',',')}`;
+            document.getElementById('modal-checkout').style.display = 'block';
+        }
+
+        function fecharCheckout() { document.getElementById('modal-checkout').style.display = 'none'; }
+        function checkPix() { document.getElementById('pix-box').style.display = document.getElementById('c-pag').value === 'Pix' ? 'block' : 'none'; }
+
+        function enviarWhatsApp() {
+            const nome = document.getElementById('c-nome').value;
+            const end = document.getElementById('c-end').value;
+            const pag = document.getElementById('c-pag').value;
+            if(!nome || !end) return alert("Dados incompletos!");
+            const total = carrinho.reduce((acc, i) => acc + (i.preco * i.qtd), 0).toFixed(2);
+            const msg = `*PEDIDO RUSSO GOURMET*%0A*Cliente:* ${nome}%0A*End:* ${end}%0A*Pagamento:* ${pag}%0A%0A*Itens:*%0A${carrinho.map(i => `${i.qtd}x ${i.n}`).join('%0A')}%0A%0A*TOTAL: R$ ${total.replace('.',',')}*`;
+            window.open(`https://wa.me/5513982155569?text=${msg}`);
+        }
+    </script>
+</body>
+</html>
